@@ -1,5 +1,6 @@
 import type { StateCreator } from "zustand/vanilla";
 import { create } from "zustand/react";
+import { devtools } from "zustand/middleware";
 
 type TodoItem = {
   id: number | string;
@@ -18,33 +19,44 @@ type TodoStoreState = {
 
 type TodoStore = TodoStoreActions & TodoStoreState;
 
-const todoSlice: StateCreator<TodoStore> = (set, get) => ({
+const todoSlice: StateCreator<TodoStore, [["zustand/devtools", never]]> = (
+  set,
+  get,
+) => ({
   list: [],
   addTodo: (text) => {
-    set({
-      list: [
-        ...get().list,
-        {
-          text,
-          isComplete: false,
-          id: self.crypto.randomUUID(),
-        },
-      ],
-    });
+    set(
+      {
+        list: [
+          ...get().list,
+          {
+            text,
+            isComplete: false,
+            id: self.crypto.randomUUID(),
+          },
+        ],
+      },
+      false,
+      `addTodo: ${text}`,
+    );
   },
   toggle: (id) => {
-    set({
-      list: get().list.map((item) => {
-        if (item.id === id) {
-          return {
-            ...item,
-            isComplete: !item.isComplete,
-          };
-        }
-        return item;
-      }),
-    });
+    set(
+      {
+        list: get().list.map((item) => {
+          if (item.id === id) {
+            return {
+              ...item,
+              isComplete: !item.isComplete,
+            };
+          }
+          return item;
+        }),
+      },
+      false,
+      `toggle: ${id}`,
+    );
   },
 });
 
-export const useTodoStore = create<TodoStore>(todoSlice);
+export const useTodoStore = create<TodoStore>()(devtools(todoSlice));
